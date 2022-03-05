@@ -1,3 +1,8 @@
+"""
+This code was taken from: https://github.com/miloharper/multi-layer-neural-network
+And adapted for use in this application.
+"""
+
 import numpy
 from numpy import exp, array, random, dot
 import matplotlib.pyplot as plt
