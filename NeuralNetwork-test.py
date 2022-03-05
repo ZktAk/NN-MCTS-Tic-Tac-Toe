@@ -125,7 +125,7 @@ class NeuralNetwork():
 
 if __name__ == "__main__":
 
-    #Seed the random number generator
+    # Seed the random number generator
     random.seed(1)
 
     # Create a neural network
