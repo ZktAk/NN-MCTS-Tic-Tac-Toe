@@ -5,7 +5,6 @@
 # packages
 import math
 import random
-from NeuralNetwork import *
 
 # tree node class definition
 class TreeNode():
@@ -33,7 +32,7 @@ class TreeNode():
         # init the number of node visits
         self.visits = 0
         
-        # init the total score (number of wins) of the node
+        # init the total score of the node
         self.score = 0
         
         # init current node's children
@@ -41,16 +40,6 @@ class TreeNode():
 
 # MCTS class definition
 class MCTS():
-
-    def __init__(self):
-        self.W = dict()  # total reward of taking action from state
-        self.Q = dict()  # average reward of taking action from state
-        self.N = dict()  # total visit count of taking action from state
-        self.actions = dict()  # possible actions for each state, each state corresponding to a list
-        self.policy = dict()
-
-        self.Net = NeuralNetwork(9, 12, 2, 10)
-
     # search for the best move in the current position
     def search(self, initial_state):
         # create root node
@@ -59,14 +48,9 @@ class MCTS():
         # walk through 1000 iterations
         for iteration in range(1000):
             # select a node (selection phase)
-            node, isTerminal = self.select(self.root)
-
-            if not isTerminal:
-                # expand and score the node
-                node = self.expand(node)
-
+            node = self.select(self.root)
             
-            # score current node (simulation phase)
+            # scrore current node (simulation phase)
             score = self.rollout(node.board)
             
             # backpropagate results
@@ -90,61 +74,35 @@ class MCTS():
             # case where the node is not fully expanded 
             else:
                 # otherwise expand the node
-                return node, False # self.expand(node)
-
+                return self.expand(node)
+       
         # return node
-        return node, True
-
-    # convert 2D state array to 1D array
-    def arrayTo1D(self, array2D):
-
-        array1D = []
-
-        for row in array2D:
-            for col in row:
-                array1D.append(array2D[row, col])
-
-        return array1D
-
+        return node
+    
     # expand node
-    def expand(self, state):
-
-        # convert board state to 1D array to feed to Neural Net
-        NN_state = self.arrayTo1D(state.board)
-
-        # get Neural Network predictions
-        output = self.Net.predict(NN_state)
-        value_output = output[-1]
-        output.pop(-1)
-        policy_output = output.copy()  # the prior probabilities of our edges
-
-        # generate legal actions (formerly states) for the given state (formerly node)
-        actions = state.board.generate_actions()
-
-        best_val = '-inf'
-        best_move = None
-
-        # loop over generated actions (states)
-        for n in range(len(actions)):
-            # make sure that current action (state) is not present in child nodes
-            if str(actions[n].position) not in state.children:
-
-                if policy_output[n] > best_val:
-                    best_val = policy_output
-                    best_move = n
-
-        # create a new node
-        new_node = TreeNode(actions[best_move], state)
+    def expand(self, node):
+        # generate legal states (moves) for the given node
+        states = node.board.generate_states()
+        
+        # loop over generated states (moves)
+        for state in states:
+            # make sure that current state (move) is not present in child nodes
+            if str(state.position) not in node.children:
+                # create a new node
+                new_node = TreeNode(state, node)
                 
-        # add child node to parent's node children list (dict)
-        state.children[str(actions[best_move].position)] = new_node
+                # add child node to parent's node children list (dict)
+                node.children[str(state.position)] = new_node
                 
-        # case when node is fully expanded
-        if len(actions) == len(state.children):
-            state.is_fully_expanded = True
+                # case when node is fully expanded
+                if len(states) == len(node.children):
+                    node.is_fully_expanded = True
                 
-        # return newly created node
-        return new_node
+                # return newly created node
+                return new_node
+        
+        # debugging
+        print('Should not get here!!!')
     
     # simulate the game via making random moves until reach end of the game
     def rollout(self, board):
@@ -178,26 +136,19 @@ class MCTS():
             node = node.parent
     
     # select the best node basing on UCB1 formula
-    def get_best_move(self, state, exploration_constant):
-
+    def get_best_move(self, node, exploration_constant):
         # define best score & best moves
         best_score = float('-inf')
         best_moves = []
-
-        # get the sum
-        total_n = 1
-        actionList = state.children.values()
-        for action in actionList:
-            total_n += self.N[state][action]
         
         # loop over child nodes
-        for child_node in state.children.values():
+        for child_node in node.children.values():
             # define current player
             if child_node.board.player_2 == 'x': current_player = 1
             elif child_node.board.player_2 == 'o': current_player = -1
             
-            # get move score
-            move_score = current_player * self.Q[state][child_node] + (exploration_constant * self.policy[state][child_node] * math.sqrt(math.log(total_n) / (1 + self.N[state][child_node])))
+            # get move score using UCT formula
+            move_score = current_player * child_node.score / child_node.visits + exploration_constant * math.sqrt(math.log(node.visits / child_node.visits))                                        
 
             # better move has been found
             if move_score > best_score:
