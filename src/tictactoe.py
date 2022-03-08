@@ -154,7 +154,7 @@ class Board():
         return False
     
     # generate legal moves to play in the current position
-    def generate_states(self):
+    def generate_actions(self):
         # define states list (move list - list of available actions to consider)
         actions = []
         
