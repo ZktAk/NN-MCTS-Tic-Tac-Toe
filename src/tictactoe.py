@@ -166,6 +166,8 @@ class Board():
                 if self.position[row, col] == self.empty_square:
                     # append available action/board state to action list
                     actions.append(self.make_move(row, col))
+                else:
+                    actions.append(None)
         
         # return the list of available actions (board class instances)
         return actions
@@ -180,6 +182,7 @@ class Board():
         print(self)
         
         # create MCTS instance
+        print("computer initialized")
         mcts = MCTS()
                 
         # game loop
@@ -194,6 +197,7 @@ class Board():
             if user_input == '': continue
             
             try:
+            #if True:
                 # parse user input (move format [col, row]: 1,2) 
                 row = int(user_input.split(',')[1]) - 1
                 col = int(user_input.split(',')[0]) - 1
@@ -208,12 +212,12 @@ class Board():
                 
                 # print board
                 print(self)
-                
-                # search for the best move
+
                 best_move = mcts.search(self)
-                
+
                 # legal moves available
                 try:
+                #if True:
                     # make AI move here
                     self = best_move.board
                 
