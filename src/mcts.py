@@ -8,7 +8,7 @@ import random
 
 #from numpy import float128
 
-from Tests.NeuralNetwork import _sigmoid
+from NeuralNetwork import _sigmoid
 from NeuralNetwork import *
 
 
@@ -92,8 +92,8 @@ class TreeNode():
 class MCTS():
 
 	def __init__(self):
-		self.Policy_Net = NeuralNetwork(9, 12, 3, 9)
-		self.Value_Net = NeuralNetwork(9, 12, 3, 1)
+		self.Policy_Net = NeuralNetwork(9, 16, 2, 9)
+		self.Value_Net = NeuralNetwork(9, 16, 1, 1)
 
 		self.input_states = []
 
@@ -144,7 +144,7 @@ class MCTS():
 		self.game_target_values.append(0)
 
 		# Allowed thinking time/iterations: walk through 1000 iterations
-		for iteration in range(500):
+		for iteration in range(400):
 			# select a node (selection phase)
 			node = self.select(self.root)
 
