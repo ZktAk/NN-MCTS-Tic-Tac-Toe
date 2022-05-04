@@ -7,6 +7,8 @@
 # packages
 from copy import deepcopy
 from MCTS import *
+from MCTS import _adjusted_sigmoid
+import matplotlib.pyplot as plt
 
 
 # Tic Tac Toe board class
@@ -79,20 +81,32 @@ class Board():
 		print(board_string)
 
 
-	# get binary (bitboard) representation of board state
-	def getBitboard(self):
-		bitBoard = "0b"
-
+	# get the len 18 array representation of board state
+	def getArrBoard(self):
+		arrayBoard = []
 		for n in self.position:
 			if n == 1:
-				bitBoard += "1"
+				arrayBoard.append(1)
 			else:
-				bitBoard += "0"
+				arrayBoard.append(0)
 
 		for n in self.position:
 			if n == -1:
-				bitBoard += "1"
+				arrayBoard.append(1)
 			else:
+				arrayBoard.append(0)
+
+		return arrayBoard
+
+	# get binary (bitboard) representation of board state
+	def getBitboard(self):
+		bitArray = self.getArrBoard()
+		bitBoard = "0b"
+
+		for n in bitArray:
+			if n == 1:
+				bitBoard += "1"
+			elif n == 0:
 				bitBoard += "0"
 
 		#print(f"Bitboard = {bitBoard}")
@@ -150,6 +164,9 @@ class Board():
 	def train(self, sets, reps, len_tourny, data_mcts, trainee_mcts):
 		# create MCTS instances
 
+		Val_errors = []
+		Policy_errors = []
+
 		print("\nData generation networks initialized")
 		data_mcts = data_mcts
 		print("Trainee network initialized")
@@ -167,9 +184,6 @@ class Board():
 				if game % math.ceil(reps / 100) == 0:
 					percent = int(((n * reps) + game) / (sets * reps) * 100)
 					print(f"Training set {n+1} of {sets} | Game {game} of {reps} | {percent}% complete")
-				elif game+1 == reps:
-					percent = int(((n * reps) + game+1) / (sets * reps) * 100)
-					print(f"Training set {n + 1} of {sets} | Game {game+1} of {reps} | {percent}% complete")
 
 
 				move_num = 0
@@ -208,15 +222,18 @@ class Board():
 						data_mcts.update_target_vals(reward)
 						break
 
+			percent = int((n+1) / sets * 100)
+			print(f"Training set {n + 1} of {sets} | Game {reps} of {reps} | {percent}% complete")
 			print("Data Generation Complete")
+
 			# get the training data
 			inputs, target_policies, target_values = data_mcts.get_targets()
 			data_mcts.reset_targets()
 
 			# train the network
 			print(f"\nRound {n+1} Training Started...")
-			trainee_mcts.Value_Net.train2(inputs, target_values, n)
-			trainee_mcts.Policy_Net.train2(inputs, target_policies, n)
+			Val_errors.extend(trainee_mcts.Value_Net.train2(inputs, target_values, 10000, _adjusted_sigmoid))
+			Policy_errors.extend(trainee_mcts.Policy_Net.train2(inputs, target_policies, 10000))
 			print(f"Round {n+1} Training Complete")
 
 			print("\nTournament Started...")
@@ -226,6 +243,15 @@ class Board():
 		print("\n*******************************")
 		print(" Neural Network Fully Trained")
 		print("*******************************\n")
+
+		plt.plot(Val_errors)
+		plt.plot(Policy_errors)
+		plt.xlabel("Iterations")
+		plt.ylabel("Error for all training instances")
+		plt.savefig("cumulative_error.png")
+
+		print(f"\nPolicy Error at End {Policy_errors[-1]}")
+		print(f"\nValue Error at End {Val_errors[-1]}")
 
 	def NN_Tournament(self, dataMCTS, traineeMCTS, numGames):
 
@@ -288,7 +314,7 @@ class Board():
 		traineeMCTS.reset_targets()
 
 		# If the Trainee MCTS won at least 55% of the games
-		if traineeMCTS_Wins / numGames >= 0.55:
+		if traineeMCTS_Wins / numGames >= 0.60:
 			trainee_prob_policy = traineeMCTS.Policy_Net.layers
 			trainee_val_policy = traineeMCTS.Value_Net.layers
 
@@ -301,7 +327,7 @@ class Board():
 
 
 	def game_loop(self, mcts):
-		for n in range(5):
+		for n in range(1):
 			self.init_board()
 
 			# print(f"Board = {self.position}")
@@ -342,7 +368,7 @@ if __name__ == '__main__':
 	trainer = MCTS()
 
 	# Train the AI
-	board.train(5, 100, 100, player, trainer)
+	board.train(500, 50, 50, player, trainer)
 
-	# Let the AI player 5 games against itself to reveal if it has learned anything
+	# Let the AI player 1 game against itself to reveal if it has learned anything
 	board.game_loop(player)

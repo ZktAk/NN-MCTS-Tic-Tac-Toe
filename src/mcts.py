@@ -92,8 +92,8 @@ class TreeNode():
 class MCTS():
 
 	def __init__(self):
-		self.Policy_Net = NeuralNetwork(9, 16, 2, 9)
-		self.Value_Net = NeuralNetwork(9, 16, 1, 1)
+		self.Policy_Net = NeuralNetwork(18, 25, 2, 9)
+		self.Value_Net = NeuralNetwork(18, 25, 2, 1)
 
 		self.input_states = []
 
@@ -138,18 +138,18 @@ class MCTS():
 	def search(self, initial_state):
 		# create root node
 		self.root = TreeNode(initial_state, None)
-		self.root.init(self.Policy_Net.predict(initial_state.position.copy())[-1].copy())
+		self.root.init(self.Policy_Net.predict(initial_state.getArrBoard().copy())[-1].copy())
 
-		self.input_states.append(initial_state.position.copy())
+		self.input_states.append(initial_state.getArrBoard().copy())
 		self.game_target_values.append(0)
 
 		# Allowed thinking time/iterations: walk through 1000 iterations
-		for iteration in range(400):
+		for iteration in range(300):
 			# select a node (selection phase)
 			node = self.select(self.root)
 
 			# score current node
-			NN_state = node.board.position.copy()
+			NN_state = node.board.getArrBoard().copy()
 			#print(f"node.board.position.copy() = {NN_state}")
 			score = self.Value_Net.predict(NN_state, _adjusted_sigmoid)[-1].copy()
 
@@ -208,7 +208,7 @@ class MCTS():
 		new_board = state.board.getMove(len_best_val)
 		state.children[len_best_val].board = new_board
 
-		new_board_pos = new_board.position.copy()
+		new_board_pos = new_board.getArrBoard().copy()
 		policy = self.Policy_Net.predict(new_board_pos)[-1].copy()
 
 		# init the prior policies of the children

@@ -24,6 +24,8 @@ def _sigmoid(x):
 def _sigmoid_derivative(x):
     return x * (1 - x)
 
+def _adjusted_sigmoid_derivative(x):
+    return (-0.5 * pow(x, 2)) +5
 
 class NeuronLayer():
     def __init__(self, number_of_neurons, number_of_inputs_per_neuron):
@@ -97,9 +99,6 @@ class NeuralNetwork():
                 deltas.append(layer_delta)
 
             # Calculate how much to adjust the weights by
-            print("VECTORS = " + str(input_vectors.T))
-            print()
-            print("DELTAS  = " + str(deltas[-1]))
             layer1_adjustment = input_vectors.T.dot(deltas[-1])
             layer_adjustments = [layer1_adjustment]
 
@@ -126,29 +125,33 @@ class NeuralNetwork():
 
         return cumulative_errors
 
-    def train2(self, input_vectors, targets, it):
 
-        #print(f"Input shape = {input_vectors.shape}")
-        #print(f"Target shape = {targets.shape}")
+    def train2(self, input_vectors, targets, iterations, output_function=_sigmoid):
 
         cumulative_errors = []
 
         # Pass the training set through our neural network
-        output_from_layers = self.predict(input_vectors)
+        output_from_layers = self.predict(input_vectors, output_function)
 
         deltas = []
 
         # Calculate the error for layer 2 (The difference between the desired output
         # and the predicted output).
         lastLayer_error = targets - output_from_layers[-1]
-        lastLayer_delta = lastLayer_error * _sigmoid_derivative(output_from_layers[-1])
+        if output_function == _sigmoid:
+            lastLayer_delta = lastLayer_error * _sigmoid_derivative(output_from_layers[-1])
+        else:
+            lastLayer_delta = lastLayer_error * _adjusted_sigmoid_derivative(output_from_layers[-1])
         deltas.append(lastLayer_delta)
 
         # Calculate the error for layer 1 (By looking at the weights in layer 1,
         # we can determine by how much layer 1 contributed to the error in layer 2).
         for n in range(len(output_from_layers) - 1):
             layer_error = deltas[-1].dot(self.layers[-1 - n].synaptic_weights.T)
-            layer_delta = layer_error * _sigmoid_derivative(output_from_layers[-1 - (n + 1)])
+            if output_function == _sigmoid:
+                layer_delta = layer_error * _sigmoid_derivative(output_from_layers[-1 - (n + 1)])
+            else:
+                layer_delta = layer_error * _adjusted_sigmoid_derivative(output_from_layers[-1 - (n + 1)])
             deltas.append(layer_delta)
 
         # Calculate how much to adjust the weights by
@@ -165,25 +168,25 @@ class NeuralNetwork():
             self.layers[n].synaptic_weights += layer_adjustments[n]
 
         # save pertinent data for graph
-        if it % 1 == 0:
-            cumulative_error = 0
-            # Loop through all the instances to measure the error
-            for data_instance_index in range(len(input_vectors)):
-                data_point = input_vectors[data_instance_index]
-                target = targets[data_instance_index]
 
-                prediction = self.predict(data_point)[-1]
-                error = numpy.square(prediction - target)
+        cumulative_error = 0
+        # Loop through all the instances to measure the error
+        for data_instance_index in range(len(input_vectors)):
+            data_point = input_vectors[data_instance_index]
+            target = targets[data_instance_index]
 
-                cumulative_error = cumulative_error + error
-            cumulative_errors.append(cumulative_error)
+            prediction = self.predict(data_point, output_function)[-1]
+            error = numpy.square(prediction - target)
+
+            cumulative_error += error
+        cumulative_errors.append(cumulative_error)
 
         return cumulative_errors
 
 
 
     # The neural network thinks.
-    def predict(self, inputs, output_function=None):
+    def predict(self, inputs, output_function=_sigmoid):
 
         layer_output = inputs
         #print(f"Inputs = {inputs}")
@@ -191,13 +194,8 @@ class NeuralNetwork():
 
         for layer in self.layers:
 
-            #print(f"dot = {dot(layer_output, layer.synaptic_weights)}")
-
-            layer_output = _sigmoid(dot(layer_output, layer.synaptic_weights))
+            layer_output = output_function(dot(layer_output, layer.synaptic_weights))
             outputs.append(layer_output)
-
-            if output_function is not None:
-                outputs[-1] = output_function(outputs[-1])
 
         return outputs
 
@@ -226,12 +224,19 @@ if __name__ == "__main__":
 
     # The training set. We have 7 examples, each consisting of 3 input values
     # and 1 output value.
-    training_input_vectors = array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
-    training_targets = array([[0, 1, 1, 1, 1, 0, 0]]).T
+    training_input_vectors = array([[1, 4, 27], [3, 6, 1], [27, 0, 72], [31, 73, 28], [34, 21, 78], [21, 25, 12], [7, 2, 3]])
+    training_targets = array([[1, 3, 27, 31, 34, 21, 7]]).T
 
     # Train the neural network using the training set.
     # Do it 60,000 times and make small adjustments each time.
-    training_error = neural_network.train2(training_input_vectors, training_targets, 1) # , 60000
+    training_error = []
+
+    if True:
+        training_error = neural_network.train(training_input_vectors, training_targets, 60000)
+
+    else:
+        for n in range(2000):
+            training_error.extend(neural_network.train2(training_input_vectors, training_targets, 60000))
 
     print("Stage 2) New synaptic weights after training: ")
     neural_network.print_weights()
