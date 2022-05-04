@@ -9,5 +9,5 @@ This project uses a Neural Network guided Monte-Carlo Tree-Search to play Tic-Ta
 5. Add policy.bin file to store NN policy
 6. Implement NN training
 
-#ToDo
+# ToDo
 1. Conduct large scale testing to determine if NN is indeed learning
