@@ -9,6 +9,7 @@ from copy import deepcopy
 from MCTS import *
 from MCTS import _adjusted_sigmoid
 import matplotlib.pyplot as plt
+from params import Training_sets, Training_reps, Tournament_length
 
 
 # Tic Tac Toe board class
@@ -368,7 +369,7 @@ if __name__ == '__main__':
 	trainer = MCTS()
 
 	# Train the AI
-	board.train(500, 50, 50, player, trainer)
+	board.train(Training_sets, Training_reps, Tournament_length, player, trainer)
 
 	# Let the AI player 1 game against itself to reveal if it has learned anything
 	board.game_loop(player)

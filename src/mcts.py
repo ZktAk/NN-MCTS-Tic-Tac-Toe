@@ -11,6 +11,7 @@ import random
 from NeuralNetwork import _sigmoid
 from NeuralNetwork import *
 
+from params import Policy_NN_Size, Policy_NN_Layers, Value_NN_Size, Value_NN_Layers, Thinking_time
 
 def _adjusted_sigmoid(x):
 	test = (2 / (1 + exp(-x))) - 1
@@ -92,8 +93,8 @@ class TreeNode():
 class MCTS():
 
 	def __init__(self):
-		self.Policy_Net = NeuralNetwork(18, 25, 2, 9)
-		self.Value_Net = NeuralNetwork(18, 25, 2, 1)
+		self.Policy_Net = NeuralNetwork(18, Policy_NN_Size, Policy_NN_Layers, 9)
+		self.Value_Net = NeuralNetwork(18, Value_NN_Size, Value_NN_Layers, 1)
 
 		self.input_states = []
 
@@ -144,7 +145,7 @@ class MCTS():
 		self.game_target_values.append(0)
 
 		# Allowed thinking time/iterations: walk through 1000 iterations
-		for iteration in range(300):
+		for iteration in range(Thinking_time):
 			# select a node (selection phase)
 			node = self.select(self.root)
 

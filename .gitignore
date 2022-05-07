@@ -1,5 +1,7 @@
 .idea
 cumulative_error.png
+cumulative_Policy_error.png
+cumulative_Val_error.png
 test.py
 Tests
 __pycache__
