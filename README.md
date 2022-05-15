@@ -19,7 +19,7 @@ python3 Tic-Tac-Toe.py
 7. Preliminary training to assess if NN is learning
 
 # Results of Training
-The following image shows the cumulative error of the Neural Network over 50 training rounds of 100 games (5000 games total). Better choices result in lower values on the graph, with valuees < 1 being very accurate. 
+The following image shows the cumulative error of the Neural Network over 50 training rounds of 100 games (5000 games total). Better choices result in lower values on the graph, with values < 1 being very accurate. 
 
 Substancial debugging is evidently required.
 
